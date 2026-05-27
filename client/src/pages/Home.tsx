@@ -4,7 +4,16 @@ import { fetchEvents } from "../api";
 import type { EventSummary, EventFilters } from "../types";
 import EventCard from "../components/EventCard";
 import FilterBar from "../components/FilterBar";
-import { errorClass } from "../styles";
+import {
+  errorClass,
+  primaryButtonClass,
+  polePageClass,
+  poleHeaderClass,
+  poleScrollClass,
+  poleColumnClass,
+  posterRowClass,
+} from "../styles";
+import { POSTER_OVERLAP_PX, POSTER_ROTATIONS } from "../constants";
 
 export default function Home() {
   const [events, setEvents] = useState<EventSummary[]>([]);
@@ -12,7 +21,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<EventFilters>({});
+  const [showFilters, setShowFilters] = useState(false);
+  const isFirstRender = useRef(true);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
 
   const loadPage = useCallback(async (cursor: string | undefined, currentFilters: EventFilters) => {
@@ -32,6 +44,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+    } else {
+      setShowFilters(false);
+    }
     setEvents([]);
     setNextCursor(null);
     loadPage(undefined, filters);
@@ -47,7 +64,7 @@ export default function Home() {
           loadPage(nextCursor, filters);
         }
       },
-      { rootMargin: "200px" },
+      { root: scrollRef.current, rootMargin: "200px" },
     );
 
     observer.observe(sentinel);
@@ -55,38 +72,77 @@ export default function Home() {
   }, [nextCursor, filters, loadPage]);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">TelephonePole</h1>
-        <Link
-          to="/upload"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+    <div className={polePageClass}>
+      <header className={poleHeaderClass}>
+        <button
+          onClick={() => setFilters({})}
+          className="text-xl font-bold text-stone-100 tracking-wide hover:text-amber-400 transition-colors"
         >
-          Post a Flyer
-        </Link>
+          TelephonePole
+        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowFilters((v) => !v)}
+            className="text-sm text-stone-400 hover:text-amber-400 transition-colors"
+          >
+            {showFilters ? "Hide filters" : "Filter"}
+          </button>
+          <Link
+            to="/upload"
+            className={primaryButtonClass}
+          >
+            Post a Flyer
+          </Link>
+        </div>
       </header>
 
-      <FilterBar filters={filters} onFiltersChange={setFilters} />
+      {showFilters && (
+        <div className="flex-none bg-stone-900 border-b border-stone-800 px-4 py-4">
+          <FilterBar filters={filters} onFiltersChange={setFilters} />
+        </div>
+      )}
 
       {error && (
-        <p className={errorClass}>{error}</p>
+        <div className="flex-none px-4 pt-4">
+          <p className={errorClass}>{error}</p>
+        </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {events.map((event) => (
-          <EventCard key={event._id} event={event} />
-        ))}
+      <div ref={scrollRef} className={poleScrollClass}>
+        <div className={poleColumnClass}>
+          {Array.from({ length: Math.ceil(events.length / 4) }, (_, rowIdx) => {
+            const rowEvents = events.slice(rowIdx * 4, rowIdx * 4 + 4);
+            return (
+              <div
+                key={rowEvents[0]._id}
+                className={posterRowClass}
+                style={{
+                  zIndex: Math.ceil(events.length / 4) - rowIdx,
+                  marginTop: rowIdx === 0 ? 0 : -POSTER_OVERLAP_PX,
+                }}
+              >
+                {rowEvents.map((event, colIdx) => (
+                  <EventCard
+                    key={event._id}
+                    event={event}
+                    rotation={POSTER_ROTATIONS[(rowIdx * 4 + colIdx) % POSTER_ROTATIONS.length]}
+                  />
+                ))}
+              </div>
+            );
+          })}
+        </div>
+
+        {loading && (
+          <p className="py-8 text-center text-sm text-stone-400">Loading…</p>
+        )}
+
+        {!loading && events.length === 0 && !error && (
+          <p className="py-8 text-center text-sm text-stone-400">No events found.</p>
+        )}
+
+        <div ref={sentinelRef} className="h-1" />
       </div>
-
-      {loading && (
-        <p className="mt-8 text-center text-sm text-gray-500">Loading…</p>
-      )}
-
-      {!loading && events.length === 0 && !error && (
-        <p className="mt-8 text-center text-sm text-gray-500">No events found.</p>
-      )}
-
-      <div ref={sentinelRef} className="h-1" />
-    </main>
+    </div>
   );
 }

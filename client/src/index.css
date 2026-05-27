@@ -1,1 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
 @import "tailwindcss";
+
+body {
+  font-family: 'Special Elite', 'Courier New', Courier, monospace;
+}

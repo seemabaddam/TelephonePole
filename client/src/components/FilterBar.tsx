@@ -60,7 +60,7 @@ export default function FilterBar({ filters, onFiltersChange }: Props) {
     setDraft((prev) => ({ ...prev, [field]: e.target.value }));
 
   return (
-    <form onSubmit={handleApply} className="mb-8 flex flex-wrap justify-center gap-x-8 gap-y-4 items-end">
+    <form onSubmit={handleApply} className="flex flex-wrap justify-center gap-x-8 gap-y-4 items-end">
       <div>
         <p className={labelClass}>Event date (range)</p>
         <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export default function FilterBar({ filters, onFiltersChange }: Props) {
             className={`w-36 ${baseInputClass}`}
             title="From"
           />
-          <span className="text-gray-400 text-sm">–</span>
+          <span className="text-stone-500 text-sm">–</span>
           <input
             type="date"
             value={draft.eventBefore}
@@ -100,8 +100,8 @@ export default function FilterBar({ filters, onFiltersChange }: Props) {
           onChange={set("sort")}
           className={`w-40 ${baseInputClass}`}
         >
-          <option value="">Newest upload</option>
-          <option value="eventDate">Event date</option>
+          <option value="">Event date</option>
+          <option value="uploadedAt">Newest upload</option>
         </select>
       </div>
 
@@ -113,7 +113,7 @@ export default function FilterBar({ filters, onFiltersChange }: Props) {
         <button
           type="button"
           onClick={handleClear}
-          className="text-sm text-gray-500 hover:text-gray-700 underline"
+          className="text-sm text-stone-500 hover:text-amber-400 underline"
         >
           Clear
         </button>
