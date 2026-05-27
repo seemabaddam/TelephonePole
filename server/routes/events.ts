@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Event } from '../models/Event';
 import upload from '../middleware/upload';
@@ -12,39 +12,53 @@ function buildImageUrl(id: string | Types.ObjectId): string {
 }
 
 // POST /api/events
-router.post('/', upload.single('poster'), async (req: Request, res: Response) => {
-  try {
-    const { title, description, eventDate, venue, location } = req.body;
+router.post(
+  '/',
+  (req: Request, res: Response, next: NextFunction) => {
+    upload.single('image')(req, res, (err: unknown) => {
+      if (err) {
+        const message = err instanceof Error ? err.message : 'Upload failed';
+        const status = (err as { code?: string }).code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+        res.status(status).json({ error: message });
+        return;
+      }
+      next();
+    });
+  },
+  async (req: Request, res: Response) => {
+    try {
+      const { title, description, eventDate, venue, location } = req.body;
 
-    if (!title || !eventDate || !req.file) {
-      res.status(400).json({ error: 'title, eventDate, and poster image are required' });
-      return;
+      if (!title || !eventDate || !req.file) {
+        res.status(400).json({ error: 'title, eventDate, and poster image are required' });
+        return;
+      }
+
+      const event = await Event.create({
+        title,
+        description,
+        eventDate: new Date(eventDate),
+        venue,
+        location,
+        imageData: req.file.buffer,
+        imageMimeType: req.file.mimetype,
+      });
+
+      res.status(201).json({
+        _id: event._id.toString(),
+        title: event.title,
+        description: event.description,
+        eventDate: event.eventDate.toISOString(),
+        venue: event.venue,
+        location: event.location,
+        uploadedAt: event.uploadedAt.toISOString(),
+        imageUrl: buildImageUrl(event._id),
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to create event' });
     }
-
-    const event = await Event.create({
-      title,
-      description,
-      eventDate: new Date(eventDate),
-      venue,
-      location,
-      imageData: req.file.buffer,
-      imageMimeType: req.file.mimetype,
-    });
-
-    res.status(201).json({
-      _id: event._id.toString(),
-      title: event.title,
-      description: event.description,
-      eventDate: event.eventDate.toISOString(),
-      venue: event.venue,
-      location: event.location,
-      uploadedAt: event.uploadedAt.toISOString(),
-      imageUrl: buildImageUrl(event._id),
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create event' });
-  }
-});
+  },
+);
 
 // GET /api/events
 router.get('/', async (req: Request, res: Response) => {

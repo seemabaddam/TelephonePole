@@ -35,7 +35,7 @@ export default function Upload() {
     if (!eventDate) { setError("Event date is required."); return; }
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("image", file);
     formData.append("title", title.trim());
     formData.append("description", description.trim());
     formData.append("eventDate", eventDate);
