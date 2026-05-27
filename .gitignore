@@ -3,3 +3,6 @@ node_modules/
 dist/
 build/
 client/dist/
+server/scaffolding.md
+lint.md
+convos/

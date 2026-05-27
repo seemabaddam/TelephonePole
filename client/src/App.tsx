@@ -1,7 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-import Upload from './pages/Upload'
-import EventDetail from './pages/EventDetail'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Upload from './pages/Upload';
+import EventDetail from './pages/EventDetail';
 
 export default function App() {
   return (
@@ -12,5 +12,5 @@ export default function App() {
         <Route path="/events/:id" element={<EventDetail />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
