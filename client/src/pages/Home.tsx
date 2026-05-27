@@ -3,13 +3,15 @@ import { Link } from "react-router-dom";
 import { fetchEvents } from "../api";
 import type { EventSummary, EventFilters } from "../types";
 import EventCard from "../components/EventCard";
+import FilterBar from "../components/FilterBar";
+import { errorClass } from "../styles";
 
 export default function Home() {
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filters] = useState<EventFilters>({});
+  const [filters, setFilters] = useState<EventFilters>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
 
@@ -54,7 +56,7 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">TelephonePole</h1>
         <Link
           to="/upload"
@@ -64,8 +66,10 @@ export default function Home() {
         </Link>
       </header>
 
+      <FilterBar filters={filters} onFiltersChange={setFilters} />
+
       {error && (
-        <p className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+        <p className={errorClass}>{error}</p>
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">

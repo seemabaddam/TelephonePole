@@ -102,7 +102,7 @@ router.get('/', async (req: Request, res: Response) => {
     // Default sort by _id descending — ObjectIds are time-ordered, so this is equivalent
     // to uploadedAt descending while using the default index instead of a field scan.
     const sortOrder = sort === 'eventDate'
-      ? { eventDate: -1 as const, _id: -1 as const }
+      ? { eventDate: 1 as const, _id: -1 as const }
       : { _id: -1 as const };
 
     const docs = await Event.find(query)

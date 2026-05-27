@@ -1,6 +1,7 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadEvent } from "../api";
+import { inputClass, labelClass, primaryButtonClass, errorClass } from "../styles";
 
 export default function Upload() {
   const navigate = useNavigate();
@@ -54,16 +55,12 @@ export default function Upload() {
     }
   }
 
-  const inputClass =
-    "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
-  const labelClass = "block text-sm font-medium text-gray-700 mb-1";
-
   return (
     <main className="mx-auto max-w-lg py-10 px-4">
       <h1 className="text-2xl font-bold mb-6">Upload a Poster</h1>
 
       {error && (
-        <p className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">
+        <p className={errorClass}>
           {error}
         </p>
       )}
@@ -149,7 +146,7 @@ export default function Upload() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full ${primaryButtonClass}`}
         >
           {isLoading ? "Uploading…" : "Submit"}
         </button>
