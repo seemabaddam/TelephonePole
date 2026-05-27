@@ -1,0 +1,167 @@
+TelephonePole — Event Poster Web App
+=====================================
+
+OVERVIEW
+--------
+Community bulletin-board web app where anyone can post event flyers and browse them.
+The name evokes a telephone pole covered in stapled posters.
+
+MVP scope: anonymous uploads, no auth, no CDN.
+Stack: React + Vite (TypeScript) frontend, Node.js + Express (TypeScript) backend, MongoDB.
+Images are stored as binary buffers directly in MongoDB for now.
+
+TWO CORE WORKFLOWS
+------------------
+1. Upload — anyone can submit a poster image + event metadata via a form
+2. Browse — infinite-scroll landing page of poster thumbnails with filters
+
+
+DIRECTORY STRUCTURE
+-------------------
+TelephonePole/
+├── client/               # React + Vite (TypeScript)
+│   ├── src/
+│   │   ├── components/   # EventCard, FilterBar
+│   │   ├── pages/        # Home.tsx, Upload.tsx, EventDetail.tsx
+│   │   ├── types.ts      # Shared Event types
+│   │   ├── api.ts        # Typed fetch helpers
+│   │   └── App.tsx       # Router
+│   └── package.json
+├── server/               # Node.js + Express (TypeScript)
+│   ├── models/           # Event.ts (Mongoose schema)
+│   ├── routes/           # events.ts
+│   ├── middleware/       # upload.ts (multer config)
+│   ├── db.ts             # MongoDB connection
+│   └── index.ts
+└── .env                  # MONGODB_URI, PORT
+
+
+DATA MODEL
+----------
+MongoDB collection: events
+
+Field           Type      Notes
+_id             ObjectId  auto
+title           String    required
+description     String    optional
+eventDate       Date      required — used for filtering
+venue           String    optional
+location        String    optional city/neighborhood
+posterData      Buffer    raw image binary
+posterMimeType  String    e.g. "image/jpeg"
+uploadedAt      Date      auto (Date.now)
+
+
+API ROUTES
+----------
+All routes under /api/events
+
+POST   /api/events          Upload poster + metadata (multipart/form-data)
+GET    /api/events          Paginated list with filters (see below)
+GET    /api/events/:id      Single event metadata (no image binary)
+GET    /api/events/:id/image  Serve poster image binary
+
+Why a separate image endpoint?
+The list API returns metadata for 20 events at once. Embedding the full binary
+for each would make one response 20-100 MB. Instead the list returns metadata +
+an imageUrl string; the browser fetches each image lazily via <img src={imageUrl}>.
+
+Why cursor-based pagination?
+The client sends the _id of the last card it received (?cursor=<lastId>).
+The server queries { _id: { $lt: lastId } } using MongoDB's index — O(1) regardless
+of collection size. Offset/page-number pagination breaks when new posts are added
+mid-scroll (duplicates or skipped items).
+
+Filter query params for GET /api/events:
+  cursor          last _id seen; omit for first page
+  limit           default 20
+  uploadedAfter   ISO date string
+  uploadedBefore  ISO date string
+  eventAfter      ISO date string
+  eventBefore     ISO date string
+  location        case-insensitive substring match
+  sort            "uploadedAt" (default) | "eventDate"
+
+List response shape:
+  { events: [...metadata + imageUrl], nextCursor: "<_id or null>" }
+
+
+KEY LIBRARIES
+-------------
+Server:  express, mongoose, multer, cors, dotenv, tsx (TS runner, no compile step)
+Client:  react, react-router-dom, vite, tailwindcss
+
+What is multer?
+Express can't parse multipart/form-data (the browser encoding for file uploads)
+by default. Multer is a small middleware that gives you req.file (image buffer)
+and req.body (text fields) from the same form POST. Necessary for file upload;
+configuration is just a few lines.
+
+
+FRONTEND PAGES
+--------------
+
+Home.tsx (landing/browse page)
+  - FilterBar component: date pickers for upload date and event date,
+    location text input, sort selector
+  - Infinite scroll: IntersectionObserver on a sentinel <div> at the bottom;
+    when it enters the viewport and there's a nextCursor, fetch the next page
+    and append to the event list. Reset on filter change.
+  - EventCard component: poster thumbnail via <img src={imageUrl}>,
+    title, event date, venue
+
+Upload.tsx
+  - Drag-or-click image input with preview before submit
+  - Form fields: Title (required), Description, Event Date (required), Venue, Location
+  - Submits as multipart/form-data
+  - On success: navigate to /events/:id
+
+EventDetail.tsx
+  - Full-size poster image
+  - All metadata fields
+  - Back link to /
+
+
+IMPLEMENTATION WORKSTREAMS (suggested agent breakdown)
+------------------------------------------------------
+These can be handed to separate agents roughly in this order.
+Agents 5-7 can run in parallel once the types/API contract is defined.
+
+Agent 1 — Scaffolding
+  Directory structure, package.json files, tsconfig, dev tooling (concurrently),
+  Tailwind setup, .gitignore, .env.example, App.tsx router skeleton with stub pages.
+
+Agent 2 — Server: Data Layer
+  Mongoose Event model with IEvent TypeScript interface, MongoDB connectDB() function.
+
+Agent 3 — Server: API Routes
+  Multer middleware, all four Express routes, wire into index.ts.
+  Depends on Agent 2.
+
+Agent 4 — Shared Types + API Client
+  client/src/types.ts (EventSummary, EventDetail interfaces),
+  client/src/api.ts (typed fetch helpers for all four endpoints).
+  Can run in parallel with Agent 2.
+
+Agent 5 — Browse Page (Home)
+  EventCard, FilterBar, Home.tsx with infinite scroll logic.
+  Depends on Agent 4.
+
+Agent 6 — Upload Page
+  Upload.tsx with drag-drop preview and form fields.
+  Depends on Agent 4.
+
+Agent 7 — Event Detail Page
+  EventDetail.tsx.
+  Depends on Agent 4.
+
+
+VERIFICATION
+------------
+- npm run dev from root starts both servers without errors
+- POST /api/events with a real image (curl or Postman) returns an event with _id
+- GET /api/events/:id/image in browser renders the poster
+- Browse page: grid loads, scrolling to bottom triggers a second fetch
+  (check Network tab for request with cursor= param)
+- Location filter: only matching events appear
+- Upload form: after submit, redirects to detail page with poster visible
