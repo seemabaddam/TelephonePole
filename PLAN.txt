@@ -83,7 +83,13 @@ Filter query params for GET /api/events:
   sort            "uploadedAt" (default) | "eventDate"
 
 List response shape:
-  { events: [...metadata + imageUrl], nextCursor: "<_id or null>" }
+  { events: [...EventSummary + imageUrl], nextCursor: "<_id or null>" }
+
+Client TypeScript types (client/src/types.ts):
+  EventSummary   _id, eventDate, venue, location, uploadedAt, imageUrl
+                 — fields needed for the card and filtering; no title
+  EventDetail    extends EventSummary + title, description
+                 — returned by GET /api/events/:id and POST /api/events
 
 
 KEY LIBRARIES
@@ -107,8 +113,8 @@ Home.tsx (landing/browse page)
   - Infinite scroll: IntersectionObserver on a sentinel <div> at the bottom;
     when it enters the viewport and there's a nextCursor, fetch the next page
     and append to the event list. Reset on filter change.
-  - EventCard component: poster thumbnail via <img src={imageUrl}>,
-    title, event date, venue
+  - EventCard component: image-only card via <img src={imageUrl}>;
+    no title displayed on card (title lives on detail page only)
 
 Upload.tsx
   - Drag-or-click image input with preview before submit
