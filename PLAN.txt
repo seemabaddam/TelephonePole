@@ -47,8 +47,8 @@ description     String    optional
 eventDate       Date      required — used for filtering
 venue           String    optional
 location        String    optional city/neighborhood
-posterData      Buffer    raw image binary
-posterMimeType  String    e.g. "image/jpeg"
+imageData       Buffer    raw image binary
+imageMimeType   String    e.g. "image/jpeg"
 uploadedAt      Date      auto (Date.now)
 
 
