@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './db';
+import eventsRouter from './routes/events';
 
 dotenv.config({ path: '../.env' });
 
@@ -11,7 +12,7 @@ const PORT = process.env.PORT ?? 3001;
 app.use(cors());
 app.use(express.json());
 
-// TODO Agent 3: app.use('/api/events', eventsRouter)
+app.use('/api/events', eventsRouter);
 
 connectDB().catch((err) => {
   console.error('Failed to connect to MongoDB:', err);
