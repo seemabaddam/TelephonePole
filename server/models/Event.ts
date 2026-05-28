@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose'
+import { Schema, model, Document } from 'mongoose';
 
 export interface IEvent extends Document {
   title: string
@@ -20,6 +20,6 @@ const eventSchema = new Schema<IEvent>({
   imageData:     { type: Buffer, required: true },
   imageMimeType: { type: String, required: true },
   uploadedAt:    { type: Date, default: Date.now },
-})
+});
 
-export const Event = model<IEvent>('Event', eventSchema)
+export const Event = model<IEvent>('Event', eventSchema);

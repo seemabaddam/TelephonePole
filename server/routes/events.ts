@@ -54,7 +54,7 @@ router.post(
         uploadedAt: event.uploadedAt.toISOString(),
         imageUrl: buildImageUrl(event._id),
       });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: 'Failed to create event' });
     }
   },
@@ -125,7 +125,7 @@ router.get('/', async (req: Request, res: Response) => {
       })),
       nextCursor,
     });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch events' });
   }
 });
@@ -148,7 +148,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       uploadedAt: (event.uploadedAt as Date).toISOString(),
       imageUrl: buildImageUrl(event._id),
     });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch event' });
   }
 });
@@ -163,7 +163,7 @@ router.get('/:id/image', async (req: Request, res: Response) => {
     }
     res.set('Content-Type', event.imageMimeType);
     res.send(event.imageData);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch image' });
   }
 });
